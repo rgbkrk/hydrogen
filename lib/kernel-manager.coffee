@@ -1,7 +1,7 @@
 fs = require 'fs'
 path = require 'path'
 _ = require 'lodash'
-exec = require('child_process').exec
+{exec, execSync} = require('child_process')
 
 Kernel = require './kernel'
 homePath = process.env[if process.platform == 'win32' then 'USERPROFILE' else 'HOME']
@@ -21,41 +21,19 @@ module.exports = KernelManager =
         language: "python"
     availableKernels: null
 
-    getAvailableKernels: ->
+    getAvailableKernelspecs: ->
         if @availableKernels?
             return @availableKernels
         else
-            kernelLists = _.map @kernelsDirOptions, @getKernelsFromDirectory
-            kernels = []
-            kernels = kernels.concat.apply(kernels, kernelLists)
-            kernels = _.map kernels, (kernel) =>
-                kernel.language = @getTrueLanguage(kernel.language)
-                return kernel
+            kcli="python #{ __dirname }/../scripts/kcli.py"
+            kernelspecsJSON = execSync kcli
+            kernelspecs = JSON.parse kernelspecsJSON
 
-            pythonKernels = _.filter kernels, (kernel) ->
-                return kernel.language == 'python'
-            if pythonKernels.length == 0
-                kernels.push(@pythonInfo)
-            return kernels
+            for ksError, message of kernelspecs['kernelspecs-errors']
+              atom.notifications.addError(message)
 
-    getKernelsFromDirectory: (directory) ->
-        try
-            kernelNames = fs.readdirSync directory
-            kernels = _.map kernelNames, (name) =>
-                kernelDirPath = path.join(directory, name)
-
-                if fs.statSync(kernelDirPath).isDirectory()
-                    kernelFilePath = path.join(kernelDirPath, 'kernel.json')
-                    info = JSON.parse fs.readFileSync(kernelFilePath)
-                    info.language ?= info.display_name.toLowerCase()
-                    return info
-                else
-                    return null
-
-            kernels = _.filter(kernels)
-        catch error
-            kernels = []
-        return kernels
+            kernelspecs = kernelspecs.kernelspecs
+            return kernelspecs
 
     getTrueLanguage: (language) ->
         languageMappings = @getLanguageMappings()
@@ -75,10 +53,15 @@ module.exports = KernelManager =
             languageMappings = {}
 
     getKernelInfoForLanguage: (language) ->
-        kernels = @getAvailableKernels()
-        console.log "Available kernels:", kernels
+        kernelspecs = @getAvailableKernelspecs()
+        console.log "Available kernels:", kernelspecs
 
         language = @getTrueLanguage(language)
+
+        matchingKernelspecs = _.filter kernelspecs, (kernelspec) ->
+          console.log(kernelspec)
+          return kernelspec.language? and
+                 language.toLowerCase() == kernelspec.language.toLowerCase() 
 
         matchingKernels = _.filter kernels, (kernel) ->
             kernelLanguage = kernel.language
