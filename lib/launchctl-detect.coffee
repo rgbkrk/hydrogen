@@ -3,8 +3,8 @@ if process.platform == "darwin"
   childProcess = require('child_process')
   shell = process.env.SHELL || '/bin/sh'
 
-  patchPath = (err, stdout, stderr) ->
-    if (err)
+  patchPath = (error, stdout, stderr) ->
+    if (error)
       console.error("Unable to get $PATH")
       console.error("stderr: #{stderr}")
       return
