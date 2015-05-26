@@ -3,21 +3,12 @@ if process.platform == "darwin"
   childProcess = require('child_process')
   shell = process.env.SHELL || '/bin/sh'
 
-  patchPath = (error, stdout, stderr) ->
-    if (error)
-      console.error("Unable to get $PATH")
-      console.error("stderr: #{stderr}")
-      return
+  childProcess.exec("launchctl list", launchCtlPathFix)
 
-    console.log("Old $PATH: #{process.env.PATH}")
-    process.env.PATH = stdout.trim()
-    console.log("New $PATH: #{process.env.PATH}")
-
-  parseLaunchCtl = (error, stdout, stderr) ->
+  launchCtlPathFix = (error, stdout) ->
     if error and error.code != 0
-      # Could not find the Atom process within the launchctl list
-      # Likely launched using the terminal. Do nothing
-      console.log("Using your $PATH rather than trying to guess, based on launchctl error:")
+      # Launchctl errored
+      console.log("Launchctl errored, not patching path:")
       console.log(stderr)
       console.error(error)
       return
@@ -36,8 +27,15 @@ if process.platform == "darwin"
         # Now we think we can fix the path since launcctl was clearly running
         console.error("Atom was launched from Launchctl, attempting to shim PATH")
         childProcess.execFile(shell, ['-c', 'echo $PATH'], patchPath)
+      else
+        console.log("Your Atom process wasn't in the launchctl list. Using your $PATH as is.")
 
-    if stderr
-      console.log("stderr from launchctl: #{stderr}")
+  patchPath = (error, stdout, stderr) ->
+    if (error)
+      console.error("Unable to get $PATH")
+      console.error("stderr: #{stderr}")
+      return
 
-  childProcess.exec("launchctl list", parseLaunchCtl)
+    console.log("Old $PATH: #{process.env.PATH}")
+    process.env.PATH = stdout.trim()
+    console.log("New $PATH: #{process.env.PATH}")

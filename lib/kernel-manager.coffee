@@ -3,8 +3,6 @@ path = require 'path'
 _ = require 'lodash'
 
 {jupyterPath} = require './paths'
-require('./launchctl-detect')
-
 
 Kernel = require './kernel'
 

@@ -10,6 +10,8 @@ ResultView = require './result-view'
 SignalListView = require './signal-list-view'
 AutocompleteProvider = require './autocomplete-provider'
 
+patchPath = require('./patch-path')
+
 module.exports = AtomRepl =
     config:
         languageMappings:
