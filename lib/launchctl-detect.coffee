@@ -8,7 +8,10 @@ if process.platform == "darwin"
       console.error("Unable to get $PATH")
       console.error("stderr: #{stderr}")
       return
+
+    console.log("Old $PATH: #{process.env.PATH}")
     process.env.PATH = stdout.trim()
+    console.log("New $PATH: #{process.env.PATH}")
 
   parseLaunchCtl = (error, stdout, stderr) ->
     if error and error.code != 0
@@ -31,7 +34,7 @@ if process.platform == "darwin"
 
       if matches.length > 0
         # Now we think we can fix the path since launcctl was clearly running
-        console.error("Atom was launched from Launchctl, faking PATH")
+        console.error("Atom was launched from Launchctl, attempting to shim PATH")
         childProcess.execFile(shell, ['-c', 'echo $PATH'], patchPath)
 
     if stderr
