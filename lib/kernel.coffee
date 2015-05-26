@@ -5,10 +5,6 @@ _ = require 'lodash'
 child_process = require 'child_process'
 uuid = require 'uuid'
 
-fixPath = require 'fix-path'
-
-fixPath()
-
 StatusView = require './status-view'
 
 module.exports =
